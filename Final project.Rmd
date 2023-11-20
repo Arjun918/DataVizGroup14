@@ -1,0 +1,288 @@
+---
+title: "Final project"
+output: html_document
+---
+
+```{r, setup, echo=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 
+  warning = FALSE, 
+  tidy=FALSE,     # display code as typed
+  size="small")   # slightly smaller font for code
+options(digits = 3)
+
+```
+
+
+```{r load-libraries, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)  # Load ggplot2, dplyr, and all the other tidyverse packages
+library(ggthemes)
+library(gapminder)
+library(ggmap)
+library(forcats)
+library(wbstats)
+library(maps)
+```
+
+
+```{r}
+
+# loading the fertility data set
+fertility_data <- wb_data(country = "countries_only",
+                           indicator = "SP.DYN.TFRT.IN",
+                           start_date = 1960,
+                           end_date = 2021,
+                           return_wide = FALSE)
+
+# loading the life expectancy data set
+life_expectancy_data <- wb_data(country = "countries_only",
+                                indicator = "SP.DYN.LE00.IN",
+                                start_date = 1960,
+                                end_date = 2021,
+                                return_wide = FALSE)
+
+# loading the GDP per capita data set
+gdp_data <- wb_data(country = "countries_only",
+                                indicator = "NY.GDP.PCAP.CD",
+                                start_date = 1960,
+                                end_date = 2021,
+                                return_wide = FALSE)
+
+```
+
+
+
+```{r}
+
+# Join fertility data set and life expectancy data set
+result <- full_join(fertility_data, life_expectancy_data, by = c("country" = "country", "date" = "date"))
+
+# Join the result with GDP per capita data set
+final_join <- full_join(result, gdp_data, by = c("country" = "country", "date" = "date"))
+
+df <- final_join %>%
+  select(country, iso3c, date, indicator.x, value.x, indicator.y, value.y, indicator, value)
+
+```
+
+```{r}
+
+# Renaming a column 
+df <- df %>% rename(fertility_rate = indicator.x)
+df <- df %>% rename(life_expectancy_at_birth = indicator.y)
+df <- df %>% rename(gdp_per_capita_USD  = indicator)
+
+# Moving values from one column to another
+df$fertility_rate <- df$value.x
+df$life_expectancy_at_birth <- df$value.y
+df$gdp_per_capita_USD <- df$value
+
+# Selecting useful columns
+df <- df %>%
+  select(country, iso3c, date, fertility_rate, life_expectancy_at_birth, gdp_per_capita_USD)
+
+df
+
+```
+
+## Global Fertility Rate Trends and Dynamics: Analyzing Key Countries
+
+```{r}
+
+# China
+china_data <- df %>% filter(country == "China")
+
+ggplot(china_data, aes(x = date, y = fertility_rate)) +
+  geom_line() +  
+  labs(title = "Fertility Rate Trend in China Over Time",
+       x = "Year",
+       y = "Fertility Rate") +
+  theme_minimal()
+
+# India
+india_data <- df %>% filter(country == "India")
+
+ggplot(india_data, aes(x = date, y = fertility_rate)) +
+  geom_line() +  
+  labs(title = "Fertility Rate Trend in India Over Time",
+       x = "Year",
+       y = "Fertility Rate") +
+  theme_minimal()
+
+# United States
+US_data <- df %>% filter(country == "United States")
+
+ggplot(US_data, aes(x = date, y = fertility_rate)) +
+  geom_line() +  
+  labs(title = "Fertility Rate Trend in the United States Over Time",
+       x = "Year",
+       y = "Fertility Rate") +
+  theme_minimal()
+
+# United Kingdom
+UK_data <- df %>% filter(country == "United Kingdom")
+
+ggplot(UK_data, aes(x = date, y = fertility_rate)) +
+  geom_line() +  
+  labs(title = "Fertility Rate Trend in the United Kingdom Over Time",
+       x = "Year",
+       y = "Fertility Rate") +
+  theme_minimal()
+
+# Italy
+italy_data <- df %>% filter(country == "Italy")
+
+ggplot(italy_data, aes(x = date, y = fertility_rate)) +
+  geom_line() +  
+  labs(title = "Fertility Rate Trend in Italy Over Time",
+       x = "Year",
+       y = "Fertility Rate") +
+  theme_minimal()
+
+
+```
+
+```{r}
+
+countries <- c("China", "India", "United States", "United Kingdom", "Italy")
+
+# Filter data for these countries
+key_countries_data <- df %>% filter(country %in% countries)
+
+ggplot(key_countries_data, aes(x = date, y = fertility_rate, color = country)) +
+  geom_line() +  
+  labs(title = "Fertility Rate Trend in Key Countries Over Time",
+       subtitle = "All key countries display a decrease in fertility rate starting from the 1960s",
+       x = "Year",
+       y = "Fertility Rate") +
+  theme_minimal()
+
+
+```
+
+The relationship between a country's urbanization/development and its fertility rate is multifaceted, often characterized by a decrease in fertility rate as urbanization and development progress.
+
+Key factors influencing this trend include improved access to education and healthcare, particularly in reproductive health, leading to greater control over family planning decisions. Urban living often shifts priorities from larger families to career and personal development, partly due to higher living costs and limited space. Significantly, enhanced healthcare in urban and developed areas reduces child mortality rates, decreasing the need for larger families as a hedge against child loss (in less developed areas, higher child mortality often compels families to have more children, as a precaution against potential child loss). In less developed areas, child mortality is often highest during the first year of life, especially due to malnutrition and infectious diseases.
+Therefore, as survival rates for children improve, parents tend to opt for smaller families, focusing on quality of life and education for their children.
+
+This complex interplay of factors illustrates how development and urbanization can lead to fundamental changes in family size and structure. In turn, these dynamics help us explain the common trend we can see from the graph above.
+
+
+
+```{r}
+
+# United Kingdom
+UK <- df %>% filter(country == "United Kingdom")
+
+ggplot(UK, aes(x = date, y = fertility_rate)) +
+  geom_line() +  
+  labs(title = "Fertility Rate Trend in the United Kingdom Over Time",
+       subtitle = "A clear downward trend starting in the 1960s",
+       x = "Year",
+       y = "Fertility Rate") +
+  theme_minimal()
+
+```
+
+By looking at this graph we can see there's a steep decline in fertility rates from the mid-1960s until the mid-1970s. This was primarily due to increased access to contraception, notably the contraceptive pill. This period also saw significant shifts in social attitudes, with a greater focus on women's rights, feminism, and the importance of career and education for women, leading many to delay or reduce childbearing. 
+
+This overall downward trend in the UK's fertility rate is consistent with trends in other developed nations and reflects the impact of socio-economic changes and technological advancements. These factors, coupled with the high cost of raising children in an advanced economy, resulted in the continued decrease in fertility rates seen in the graph. 
+
+
+```{r}
+
+# China
+China <- df %>% filter(country == "China")
+
+ggplot(China, aes(x = date, y = fertility_rate)) +
+  geom_line() +  
+  labs(title = "Fertility Rate Trend in China Over Time",
+       subtitle = "China displays the steepest downard trend of all the key Countries analyzed in this report",
+       x = "Year",
+       y = "Fertility Rate") +
+  theme_minimal()
+
+```
+
+China initiated its stringent family planning policies in the early 1970s with a campaign named “Later, Long, Fewer”.
+Moreover, in 1980 China introduced the "One-Child Policy", which was a population control measure to aimed to limit the country's rapidly growing population. 
+Therefore, it is likely that the extreme steepness of decline of its fertility rate was (at least partially) caused by such policies.
+
+
+```{r}
+
+#write.csv(df, file = "fertility_rates.csv", row.names = FALSE)
+
+```
+In the present era, a significant trend is taking place in many developed countries: the fertility rate has fallen below the replacement rate. The replacement rate, typically set at of 2.1 children per woman, is the level of fertility required for a population to maintain its size from one generation to the next.
+
+A fertility rate below the replacement rate suggests that each generation is having fewer children than is required to keep the population stable. This trend can lead to a gradual decline in the population over time, as the number of births is insufficient to replace the number of individuals who pass away.
+
+With fewer children being born, the population will tend to age as a larger proportion of people belong to older age groups. This can lead to demographic imbalances, with potential economic and healthcare implications. For instance, a reduced workforce can lead to challenges in funding social security systems, potentially impacting the financial stability of pension and retirement programs. A smaller workforce can lead to a reduction in the government tax revenue and thus, constrain the government's ability to fund public services and infrastructure.
+
+In response to population decline, immigration becomes a critical strategy for some countries. Well-designed immigration policies can play a crucial role by attracting newcomers to address labor shortages, maintaining economic growth, supporting social security systems, and fostering innovation.
+
+
+
+
+```{r}
+
+# List of least developed countries in Africa
+least_developed_countries <- c("Niger", "Central African Republic", "Chad", 
+                               "South Sudan", "Mali")
+
+# Filter the dataset to include only the listed countries
+filtered_data <- df %>% filter(country %in% least_developed_countries)
+
+# Plotting the graph
+ggplot(filtered_data, aes(x = date, y = fertility_rate, color = country)) +
+  geom_line() +
+  labs(title = "Fertility Rate over Years in Least Developed Countries in Africa",
+       x = "Year",
+       y = "Fertility Rate") +
+  theme_minimal()
+
+```
+The fertility rate trends over time in the least developed countries, as shown in the attached graph, exhibit distinctive patterns when compared to more developed nations. In these countries, fertility rates remain high, and while there has been a gradual decline, it is not as steep or consistent as seen in developed countries.
+Such difference in fertility rate trends (compared to developed counterparts) is caused by the time lag in the urbanization and advancement of African Countries. In fact, such Countries are currently at an earlier stage in the development process. In turn, as we would expect, these Nations also have higher fertility rates, which are typical of underdevloped areas.
+
+
+```{r}
+
+# Prepare the data: Arrange by descending fertility rate and select the top 15 countries in 2021
+top_countries <- df %>%
+    filter(date == 2021) %>%
+    arrange(desc(fertility_rate)) %>%
+    head(15)
+
+# Create the ordered bar chart using fct_reorder
+ggplot(top_countries, aes(x = fct_reorder(country, fertility_rate), y = fertility_rate)) +
+    geom_bar(stat = "identity", fill="blue") +
+    coord_flip() +
+    labs(title = "Top 15 Countries by Fertility Rate in 2021",
+         x = "Country",
+         y = "Fertility Rate") +
+    theme_minimal()
+
+
+```
+
+
+```{r}
+
+bottom_countries <- df %>%
+    filter(date == 2021) %>%
+    arrange(fertility_rate) %>%
+    head(15)
+
+# Create the ordered bar chart using fct_reorder for the bottom 15 countries
+ggplot(bottom_countries, aes(x = fct_reorder(country, fertility_rate), y = fertility_rate)) +
+    geom_bar(stat = "identity", fill="blue") +
+    coord_flip() +
+    labs(title = "Bottom 15 Countries by Fertility Rate in 2021",
+         x = "Country",
+         y = "Fertility Rate") +
+    theme_minimal()
+
+
+```
